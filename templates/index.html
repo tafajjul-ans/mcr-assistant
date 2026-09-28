@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCR Assistant - Marwari College</title>
+    <title>MCR Assistant - Custom AI</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-slate-900 text-white h-screen flex flex-col justify-between">
     <!-- Header -->
     <header class="bg-slate-800 p-4 border-b border-slate-700 shadow-md flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-bold text-blue-400">MCR Assistant</h1>
-            <p class="text-xs text-slate-400">Marwari College AI Support (Students, Faculty & Principal)</p>
+            <h1 class="text-xl font-bold text-emerald-400">MCR Assistant</h1>
+            <p class="text-xs text-slate-400">Marwari College Smart Engine (100% Independent Code)</p>
         </div>
-        <span class="bg-green-500 text-xs px-2 py-1 rounded-full text-black font-semibold">Online</span>
+        <span class="bg-emerald-500 text-xs px-2 py-1 rounded-full text-black font-semibold">Active Engine</span>
     </header>
 
     <!-- Chat Box -->
     <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 max-w-3xl w-full mx-auto">
         <div class="flex justify-start">
-            <div class="bg-slate-800 p-3 rounded-2xl max-w-md text-sm shadow">
-                Namaste! Main **MCR Assistant** hoon. Aapko syllabus chahiye, kisi room ya bathroom ki location dhundhni hai, ya college ke baare me kuch bhi puchna hai, aap mujhse Hindi ya English me puch sakte hain!
+            <div class="bg-slate-800 p-3 rounded-2xl max-w-lg text-sm shadow">
+                Namaste! Main **MCR Assistant** hoon. Yeh system bina kisi external AI API ke pure custom algorithm par kaam karta hai. Aap mujhse syllabus, room no, ya college facility ke baare me puch sakte hain!
             </div>
         </div>
     </div>
@@ -28,8 +28,8 @@
     <!-- Input Form -->
     <div class="bg-slate-800 p-4 border-t border-slate-700">
         <form id="chat-form" class="max-w-3xl mx-auto flex gap-2">
-            <input type="text" id="user-input" placeholder="Yahan apna sawal likhein (Jaise: BCA ka syllabus kahan hai?)..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-semibold text-sm transition">Bhejein</button>
+            <input type="text" id="user-input" placeholder="Yahan sawal likhein (Jaise: BCA syllabus kahan hai?)..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-500" required>
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 px-6 py-3 rounded-xl font-semibold text-sm transition">Bhejein</button>
         </form>
     </div>
 
@@ -43,19 +43,19 @@
             const message = userInput.value.trim();
             if (!message) return;
 
-            // Append User Message
+            // User Message
             chatContainer.innerHTML += `
                 <div class="flex justify-end">
-                    <div class="bg-blue-600 p-3 rounded-2xl max-w-md text-sm shadow">${escapeHtml(message)}</div>
+                    <div class="bg-emerald-600 p-3 rounded-2xl max-w-md text-sm shadow">${escapeHtml(message)}</div>
                 </div>`;
             userInput.value = '';
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            // Append Loading indicator
+            // Loading
             const loadingId = 'loading-' + Date.now();
             chatContainer.innerHTML += `
                 <div id="${loadingId}" class="flex justify-start">
-                    <div class="bg-slate-800 p-3 rounded-2xl text-sm text-slate-400">Soch raha hoon...</div>
+                    <div class="bg-slate-800 p-3 rounded-2xl text-sm text-slate-400">Search kar raha hoon...</div>
                 </div>`;
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -67,19 +67,22 @@
                 });
                 const data = await res.json();
                 
-                // Remove loading
                 document.getElementById(loadingId).remove();
 
-                // Append AI Response
+                // Custom AI Response (supporting basic formatting)
+                let formattedResponse = escapeHtml(data.response)
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/`(.*?)`/, '<code class="bg-slate-950 px-1 py-0.5 rounded text-xs text-amber-300">$1</code>');
+
                 chatContainer.innerHTML += `
                     <div class="flex justify-start">
-                        <div class="bg-slate-800 p-3 rounded-2xl max-w-md text-sm shadow">${escapeHtml(data.response)}</div>
+                        <div class="bg-slate-800 p-3 rounded-2xl max-w-lg text-sm shadow space-y-2">${formattedResponse}</div>
                     </div>`;
             } catch (err) {
                 document.getElementById(loadingId).remove();
                 chatContainer.innerHTML += `
                     <div class="flex justify-start">
-                        <div class="bg-red-800 p-3 rounded-2xl max-w-md text-sm shadow">Connection error. Please try again.</div>
+                        <div class="bg-red-800 p-3 rounded-2xl max-w-md text-sm shadow">Server connection error.</div>
                     </div>`;
             }
             chatContainer.scrollTop = chatContainer.scrollHeight;
