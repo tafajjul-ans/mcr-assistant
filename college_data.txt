@@ -1,0 +1,5 @@
+Room no 20 is on the first floor old building [Latitude: 23.3441, Longitude: 85.3095, Building: Old Building, Floor: 1st]
+BCA 1st Semester Syllabus link: https://marwaricollege.ac.in/syllabus/bca-sem1.pdf [Department: BCA, Course: Computer Application, Semester: 1]
+Boys restroom is near the main canteen on the ground floor [Latitude: 23.3440, Longitude: 85.3094, Floor: Ground]
+Principal office is located in the administration block on the first floor [Latitude: 23.3442, Longitude: 85.3096]
+MCA Department is in the new IT building on the second floor [Latitude: 23.3445, Longitude: 85.3098]
