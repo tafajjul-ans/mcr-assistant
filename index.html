@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCR Assistant - Marwari College</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-900 text-white h-screen flex flex-col justify-between">
+    <!-- Header -->
+    <header class="bg-slate-800 p-4 border-b border-slate-700 shadow-md flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold text-blue-400">MCR Assistant</h1>
+            <p class="text-xs text-slate-400">Marwari College AI Support (Students, Faculty & Principal)</p>
+        </div>
+        <span class="bg-green-500 text-xs px-2 py-1 rounded-full text-black font-semibold">Online</span>
+    </header>
+
+    <!-- Chat Box -->
+    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 max-w-3xl w-full mx-auto">
+        <div class="flex justify-start">
+            <div class="bg-slate-800 p-3 rounded-2xl max-w-md text-sm shadow">
+                Namaste! Main **MCR Assistant** hoon. Aapko syllabus chahiye, kisi room ya bathroom ki location dhundhni hai, ya college ke baare me kuch bhi puchna hai, aap mujhse Hindi ya English me puch sakte hain!
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Form -->
+    <div class="bg-slate-800 p-4 border-t border-slate-700">
+        <form id="chat-form" class="max-w-3xl mx-auto flex gap-2">
+            <input type="text" id="user-input" placeholder="Yahan apna sawal likhein (Jaise: BCA ka syllabus kahan hai?)..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-semibold text-sm transition">Bhejein</button>
+        </form>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Append User Message
+            chatContainer.innerHTML += `
+                <div class="flex justify-end">
+                    <div class="bg-blue-600 p-3 rounded-2xl max-w-md text-sm shadow">${escapeHtml(message)}</div>
+                </div>`;
+            userInput.value = '';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Append Loading indicator
+            const loadingId = 'loading-' + Date.now();
+            chatContainer.innerHTML += `
+                <div id="${loadingId}" class="flex justify-start">
+                    <div class="bg-slate-800 p-3 rounded-2xl text-sm text-slate-400">Soch raha hoon...</div>
+                </div>`;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                const res = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await res.json();
+                
+                // Remove loading
+                document.getElementById(loadingId).remove();
+
+                // Append AI Response
+                chatContainer.innerHTML += `
+                    <div class="flex justify-start">
+                        <div class="bg-slate-800 p-3 rounded-2xl max-w-md text-sm shadow">${escapeHtml(data.response)}</div>
+                    </div>`;
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                chatContainer.innerHTML += `
+                    <div class="flex justify-start">
+                        <div class="bg-red-800 p-3 rounded-2xl max-w-md text-sm shadow">Connection error. Please try again.</div>
+                    </div>`;
+            }
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
