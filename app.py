@@ -1,35 +1,79 @@
 import os
+import re
 from flask import Flask, render_template, request, jsonify
-from google import genai
 
 app = Flask(__name__)
-
-# Initialize Google GenAI client (API key will be read from environment variables)
-client = genai.Client()
-
 DATA_FILE = "college_data.txt"
 
 def load_college_data():
-    """Reads college records from the simple text file"""
+    """Reads all lines from the text file"""
     if not os.path.exists(DATA_FILE):
         return []
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip()]
 
-def search_data(query):
-    """Simple keyword matching to retrieve the most relevant lines from the text file"""
+def tokenize(text):
+    """Custom tokenizer: converts text to lowercase and extracts unique words"""
+    return set(re.findall(r'\b\w+\b', text.lower()))
+
+def calculate_similarity_score(query_tokens, line_tokens):
+    """Custom Scoring Algorithm: calculates token intersection ratio"""
+    if not query_tokens or not line_tokens:
+        return 0.0
+    intersection = query_tokens.intersection(line_tokens)
+    # Overlap coefficient or Jaccard-like score
+    score = len(intersection) / float(len(query_tokens))
+    return score
+
+def custom_ai_engine(user_query):
+    """Custom Search and Response Formatting Algorithm"""
     lines = load_college_data()
-    query_words = query.lower().split()
-    relevant_lines = []
+    if not lines:
+        return "Maaf kijiye, abhi college data file khali hai ya milti nahi hai."
+
+    query_tokens = tokenize(user_query)
     
+    best_match_line = None
+    highest_score = 0.0
+
+    # Step 1: Score each line based on custom keyword matching
     for line in lines:
-        match_count = sum(1 for word in query_words if word in line.lower())
-        if match_count > 0:
-            relevant_lines.append((match_count, line))
+        line_tokens = tokenize(line)
+        score = calculate_similarity_score(query_tokens, line_tokens)
+        
+        # Give bonus weight if exact keywords like 'syllabus', 'room', 'bathroom', 'principal' match
+        for q_token in query_tokens:
+            if q_token in line.lower():
+                score += 0.1
+
+        if score > highest_score:
+            highest_score = score
+            best_match_line = line
+
+    # Threshold for matching (0.15 means at least some contextual words matched)
+    if highest_score >= 0.15 and best_match_line:
+        # Step 2: Separate main sentence and metadata brackets [...]
+        bracket_match = re.search(r'\[(.*?)\]', best_match_line)
+        metadata_str = bracket_match.group(1) if bracket_match else ""
+        
+        # Clean text without brackets for clean reading
+        clean_sentence = re.sub(r'\[.*?\]', '', best_match_line).strip()
+        
+        # Step 3: Format custom natural response in Hinglish
+        response_text = f"**MCR Assistant (Custom Engine):**\n\n📌 **Jankari:** {clean_sentence}"
+        
+        if metadata_str:
+            response_text += f"\n\n📍 **Location / Details:** `{metadata_str}`"
             
-    # Sort by relevance and take top 3 matches
-    relevant_lines.sort(key=lambda x: x[0], reverse=True)
-    return "\n".join([item[1] for item in relevant_lines[:3]])
+        # Check if query is about syllabus/links
+        if "http" in best_match_line:
+            url_match = re.search(r'(https?://[^\s]+)', best_match_line)
+            if url_match:
+                response_text += f"\n\n🔗 **Direct Link:** [Click Here to Open]({url_match.group(1)})"
+
+        return response_text
+    else:
+        return "Maaf kijiye, is sawal ki jankari abhi mere local data me nahi hai. Aap data file me yeh line add kar sakte hain, aur AI ise turant sikh lega!"
 
 @app.route("/")
 def index():
@@ -39,39 +83,9 @@ def index():
 def chat():
     user_message = request.json.get("message", "")
     if not user_message:
-        return jsonify({"response": "Please ask something!"})
+        return jsonify({"response": "Kripya apna sawal likhein!"})
     
-    # 1. Retrieve matching context from text file
-    context = search_data(user_message)
-    
-    # 2. Build system instructions and prompt for Gemini
-    prompt = f"""
-    You are MCR Assistant (Marwari College Assistant), an advanced AI assistant for Marwari College, Ranchi.
-    You help students, teachers, professors, and the principal with syllabus links, room locations, directions, and campus facilities.
-    You can speak and understand Hindi, English, and Hinglish naturally.
-    
-    Here is the relevant data retrieved from the college records file:
-    {context if context else "No direct data found in local records for this specific query."}
-    
-    User's Query: {user_message}
-    
-    Instructions:
-    - Answer accurately based on the retrieved data above.
-    - If location details (Building, Floor, Latitude, Longitude) are present, explain them clearly so the user can navigate.
-    - If a syllabus link is found, present it neatly.
-    - If data is not available, politely mention that the record is not updated yet.
-    - Match the user's language style (Hindi/English/Hinglish).
-    """
-    
-    try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-        )
-        ai_reply = response.text
-    except Exception as e:
-        ai_reply = f"Maaf kijiye, abhi system me kuch technical issue aa raha hai. Kripya thodi der baad try karein."
-        
+    ai_reply = custom_ai_engine(user_message)
     return jsonify({"response": ai_reply})
 
 if __name__ == "__main__":
